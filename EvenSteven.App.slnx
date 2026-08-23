@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/EvenSteven.Api/EvenSteven.Api.csproj" />
+    <Project Path="src/EvenSteven.BlazorWeb/EvenSteven.BlazorWeb.csproj" Id="9d0d7dfd-5e17-489b-8a7d-95f6ec6dd61a" />
+    <Project Path="src/EvenSteven.Infrastructure/EvenSteven.Infrastructure.csproj" Id="d2d1fc3e-740d-48f8-bd98-898658bb844a" />
+  </Folder>
+  <Folder Name="/tests/" />
+</Solution>
