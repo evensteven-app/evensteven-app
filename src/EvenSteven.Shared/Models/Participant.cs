@@ -4,6 +4,7 @@
         Guid Id,
         Guid RoomId,
         string Name,
-        string ParticipantKey
+        string ParticipantKey,
+        long Balance
     );
 }

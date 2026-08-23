@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Storage\Repositories\" />
+    <ProjectReference Include="..\EvenSteven.Shared\EvenSteven.Shared.csproj" />
   </ItemGroup>
 
 </Project>
