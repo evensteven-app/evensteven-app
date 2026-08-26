@@ -4,9 +4,9 @@ namespace EvenSteven.Infrastructure.Storage.Repositories.Interfaces
 {
     public interface IParticipantRepository
     {
-        Guid AddParticipantAsync(Participant participant);
-        List<Participant> GetParticipantsByRoomAsync(Guid roomId);
-        bool DeleteParticipantAsync(Guid participantId);
-        bool UpdateParticipantNameAsync(Guid participantId, string newName);
+        Task<Guid> AddParticipantAsync(Participant participant);
+        Task<List<Participant>> GetParticipantsByRoomAsync(Guid roomId);
+        Task<bool> DeleteParticipantAsync(Guid participantId);
+        Task<bool> UpdateParticipantNameAsync(Guid participantId, string newName);
     }
 }

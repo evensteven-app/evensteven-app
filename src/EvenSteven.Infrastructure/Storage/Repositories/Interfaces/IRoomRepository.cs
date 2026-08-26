@@ -4,7 +4,7 @@ namespace EvenSteven.Infrastructure.Storage.Repositories.Interfaces
 {
     public interface IRoomRepository
     {
-        Guid CreateRoomAsync(Room room);
-        Room GetRoomByIdAsync(Guid id);
+        Task<Guid> CreateRoomAsync(Room room, CancellationToken cancellationToken);
+        Task<Room?> GetRoomByIdAsync(Guid id, CancellationToken cancellationToken);
     }
 }

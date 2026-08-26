@@ -4,8 +4,8 @@ namespace EvenSteven.Infrastructure.Storage.Repositories.Interfaces
 {
     public interface IExpenseRepository
     {
-        bool AddExspenseAsync(Event _event);
-        Event GetExspenseByRoomAsync(Guid roomId);
-        bool RevertExpenseAsync(Guid eventId);
+        Task AddExpenseAsync(Expense expense, List<Participant> participants, CancellationToken cancellationToken);
+        Task<Expense> GetExspenseByRoomAsync(Guid roomId, CancellationToken cancellationToken);
+        Task RevertExpenseAsync(Guid eventId, CancellationToken cancellationToken);
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace EvenSteven.Shared.Models
 {
-    public record Event(
+    public record Expense(
         Guid Id,
         Guid RoomId,
         long Amount,

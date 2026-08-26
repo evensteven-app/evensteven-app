@@ -2,9 +2,10 @@
 {
     public record Room(
         Guid Id,
+        string Title,
         Guid EditKey,
         string PasswordHash,
-        int Version,
+        long Version,
         DateTime CreatedAt
     );
 }

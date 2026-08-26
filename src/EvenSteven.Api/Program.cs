@@ -1,6 +1,7 @@
+using EvenSteven.Infrastructure.Storage.ConnectionFactory;
 using EvenSteven.Infrastructure.Storage.Migrations;
+using EvenSteven.Infrastructure.Storage.TypeHandlers;
 using FluentMigrator.Runner;
-using System.Data.Common;
 
 namespace EvenSteven.Api
 {
@@ -11,12 +12,13 @@ namespace EvenSteven.Api
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
             builder.Services
                 .AddFluentMigratorCore()
                 .ConfigureRunner(rb => rb
                     .AddSQLite()
                     .WithGlobalConnectionString(builder.Configuration.GetConnectionString("db-connection"))
-                    .ScanIn(typeof(CreateMainTables).Assembly).For.All()
+                    .ScanIn(typeof(MigrationAssemblyMarker).Assembly).For.All()
                 )
                 .AddLogging(lb => lb.AddFluentMigratorConsole());
 
@@ -35,6 +37,7 @@ namespace EvenSteven.Api
             // Applying migrations
             using var scope = app.Services.CreateScope();
             scope.ServiceProvider.GetRequiredService<IMigrationRunner>().MigrateUp();
+            TypeHandlersManager.RegisterSqliteTypeHandlers();
 
             app.UseHttpsRedirection();
 
@@ -44,13 +47,6 @@ namespace EvenSteven.Api
             app.MapControllers();
 
             app.Run();
-        }
-
-        private static void UpdateDatabase(IServiceProvider services)
-        {
-            var runner = services.GetRequiredService<IMigrationRunner>();
-
-            runner.MigrateUp();
         }
     }
 }
