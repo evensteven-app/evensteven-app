@@ -3,10 +3,16 @@
 namespace EvenSteven.Infrastructure.Storage.Migrations
 {
     [Migration(2)]
-    public class AddRoomTitle : Migration
+    public class UpdateMainTables : Migration
     {
         public override void Down()
         {
+            Delete.Column("InviteCode")
+                .FromTable("Rooms");
+
+            Delete.Column("PayerId")
+                .FromTable("Expenses");
+
             Rename.Column("ExpenseId")
                 .OnTable("ExpenseEntries")
                 .To("EventId");
@@ -35,6 +41,20 @@ namespace EvenSteven.Infrastructure.Storage.Migrations
             Rename.Column("EventId")
                 .OnTable("ExpenseEntries")
                 .To("ExpenseId");
+
+            Create.Column("PayerId")
+                .OnTable("Expenses")
+                .AsGuid()
+                .NotNullable();
+
+            Create.Column("InviteCode")
+                .OnTable("Rooms")
+                .AsString()
+                .NotNullable();
+
+            Create.UniqueConstraint("UC_Rooms_InviteCode")
+                .OnTable("Rooms")
+                .Column("InviteCode");
         }
     }
 }

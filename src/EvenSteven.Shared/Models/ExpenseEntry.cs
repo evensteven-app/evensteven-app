@@ -2,7 +2,7 @@
 {
     public record ExpenseEntry(
         Guid Id,
-        Guid EventId,
+        Guid ExpenseId,
         Guid ParticipantId,
         long Share
     );

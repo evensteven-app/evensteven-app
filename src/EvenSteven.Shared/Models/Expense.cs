@@ -5,6 +5,7 @@
         Guid RoomId,
         long Amount,
         string Note,
+        Guid PayerId,
         bool IsReverted,
         DateTime? RevertedAt,
         DateTime CreatedAt

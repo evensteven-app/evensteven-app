@@ -21,5 +21,13 @@ namespace EvenSteven.RepositoryTests
 
             Assert.Equal(expectedValues, distribution.Select(d => d.Value).ToArray());
         }
+
+        [Fact]
+        public void SplitAmount_NoParticipants_ReturnEmptyDictionary()
+        {
+            var distribution = ExpenseUtils.SplitAmount([], 1000);
+
+            Assert.Empty(distribution);
+        }
     }
 }

@@ -4,6 +4,7 @@
         Guid Id,
         string Title,
         Guid EditKey,
+        string InviteCode,
         string PasswordHash,
         long Version,
         DateTime CreatedAt

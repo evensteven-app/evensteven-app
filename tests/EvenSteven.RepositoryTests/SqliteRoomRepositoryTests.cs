@@ -1,14 +1,13 @@
 ﻿using Dapper;
 using EvenSteven.Shared.Models;
-using Microsoft.Data.Sqlite;
 
 namespace EvenSteven.RepositoryTests
 {
     public class SqliteRoomRepositoryTests(SqliteClassFixture fixture) : IAsyncLifetime, IClassFixture<SqliteClassFixture>
     {
         private List<Room> _mockRoom = [
-                new(Guid.NewGuid(), "Test room", Guid.NewGuid(), "TestPasswordHash", 1, DateTime.UtcNow),
-                new(Guid.NewGuid(), "Test room 2", Guid.NewGuid(), "TestPasswordHash 2", 1, DateTime.UtcNow)
+                new(Guid.NewGuid(), "Test room", Guid.NewGuid(), "AABBCCDD", "TestPasswordHash", 1, DateTime.UtcNow),
+                new(Guid.NewGuid(), "Test room 2", Guid.NewGuid(), "BBCCDDEE", "TestPasswordHash 2", 1, DateTime.UtcNow)
             ];
 
         public async ValueTask DisposeAsync()
@@ -21,8 +20,8 @@ namespace EvenSteven.RepositoryTests
             await using var connection = await fixture.ConnectionFactory.CreateOpenConnectionAsync(TestContext.Current.CancellationToken);
 
             string command = """
-                INSERT INTO Rooms (Id, Title, EditKey, PasswordHash, Version, CreatedAt)
-                VALUES (@Id, @Title, @EditKey, @PasswordHash, @Version, @CreatedAt);
+                INSERT INTO Rooms (Id, Title, EditKey, InviteCode, PasswordHash, Version, CreatedAt)
+                VALUES (@Id, @Title, @EditKey, @InviteCode, @PasswordHash, @Version, @CreatedAt);
                 """;
 
             await connection.ExecuteAsync(command, _mockRoom);
@@ -47,7 +46,7 @@ namespace EvenSteven.RepositoryTests
         [Fact]
         public async Task CreateRoom_ValidParameters_ReturnNewRoomId()
         {
-            var newRoom = new Room(Guid.Empty, "New room", Guid.NewGuid(), "NewPasswordHash", 1, DateTime.UtcNow);
+            var newRoom = new Room(Guid.Empty, "New room", Guid.NewGuid(), "AABBCCEE", "NewPasswordHash", 1, DateTime.UtcNow);
             var roomId = await fixture.RoomRepository.CreateRoomAsync(newRoom, TestContext.Current.CancellationToken);
 
             var room = await fixture.RoomRepository.GetRoomByIdAsync(roomId, TestContext.Current.CancellationToken);

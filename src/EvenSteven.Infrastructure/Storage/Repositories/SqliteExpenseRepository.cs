@@ -3,12 +3,8 @@ using EvenSteven.Infrastructure.Storage.ConnectionFactory;
 using EvenSteven.Infrastructure.Storage.Repositories.Interfaces;
 using EvenSteven.Infrastructure.Storage.Utils;
 using EvenSteven.Shared.Models;
-using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Text;
 
 namespace EvenSteven.Infrastructure.Storage.Repositories
 {
@@ -21,8 +17,8 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
             var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
             string expenseCommand = """
-                    INSERT INTO Expenses (Id, RoomId, Amount, Note, CreatedAt)
-                        VALUES (@Id, @RoomId, @Amount, @Note, @CreatedAt);
+                    INSERT INTO Expenses (Id, RoomId, Amount, Note, PayerId, CreatedAt)
+                        VALUES (@Id, @RoomId, @Amount, @Note, @PayerId, @CreatedAt);
                 """;
 
             var expenseGuid = Guid.NewGuid();
@@ -36,7 +32,8 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
                     expense.RoomId,
                     expense.Amount,
                     expense.Note,
-                    CreateAt = DateTime.UtcNow
+                    expense.PayerId,
+                    CreatedAt = DateTime.UtcNow
                 }, transaction);
 
                 string expenseEntryCommand = """
@@ -44,36 +41,83 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
                         VALUES (@Id, @ExpenseId, @ParticipantId, @Share);
                 """;
 
-                foreach (var expenseEntry in distributions)
-                {
-                    await connection.ExecuteAsync(expenseEntryCommand, new
+                var parameters = distributions.Select(d =>
+                    new
                     {
                         Id = Guid.NewGuid(),
                         ExpenseId = expenseGuid,
-                        ParticipantId = expenseEntry.Key,
-                        Share = expenseEntry.Value,
-                    }, transaction);
-                }
+                        ParticipantId = d.Key,
+                        Share = d.Value,
+                    }
+                );
 
-                transaction.Commit();
+                await connection.ExecuteAsync(expenseEntryCommand, parameters, transaction);
             }
             catch (DbException ex)
             {
-                transaction.Rollback();
+                await transaction.RollbackAsync(cancellationToken);
 
                 logger.LogError(ex, "Error occured while creating new expense with id: {expeseId}", expenseGuid);
                 throw;
             }
+
+            await transaction.CommitAsync(cancellationToken);
         }
 
-        public Task<Expense> GetExspenseByRoomAsync(Guid roomId, CancellationToken cancellationToken)
+        public async Task<List<Expense>> GetExspensesByRoomAsync(Guid roomId, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+
+            string command = """
+                    SELECT Id, RoomId, Amount, Note, PayerId, IsReverted, RevertedAt, CreatedAt
+                        FROM Expenses
+                        WHERE RoomId = @RoomId;
+                """;
+
+            try
+            {
+                return [.. (await connection.QueryAsync<Expense>(command, new { RoomId = roomId }))];
+            }
+            catch (DbException ex)
+            {
+                logger.LogError(ex, "Error occured while getting room expenses with roomId: {roomId}", roomId);
+                throw;
+            }
         }
 
-        public Task RevertExpenseAsync(Guid eventId, CancellationToken cancellationToken)
+        public async Task RevertExpenseAsync(Guid expenseId, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+
+            var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+            string revertExpenseCommand = """
+                    UPDATE Expenses
+                        SET IsReverted = 1,
+                            RevertedAt = @RevertedAt
+                        WHERE Id = @ExpenseId;
+                """;
+
+            string deleteExpenseEntryCommand = """
+                    DELETE FROM ExpenseEntries
+                        WHERE ExpenseId = @ExpenseId;
+                """;
+
+            try
+            {
+                await connection.ExecuteAsync(revertExpenseCommand, new { RevertedAt = DateTime.UtcNow, ExpenseId = expenseId }, transaction);
+
+                await connection.ExecuteAsync(deleteExpenseEntryCommand, new { ExpenseId = expenseId }, transaction);
+            }
+            catch (DbException ex)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+
+                logger.LogError(ex, "Error occured while reverting expense with id: {expenseId}", expenseId);
+                throw;
+            }
+
+            await transaction.CommitAsync(cancellationToken);
         }
     }
 }
