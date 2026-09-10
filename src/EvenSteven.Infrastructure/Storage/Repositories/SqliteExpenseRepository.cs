@@ -14,50 +14,56 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
         {
             await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
-            var transaction = await connection.BeginTransactionAsync(cancellationToken);
-
-            string expenseCommand = """
-                    INSERT INTO Expenses (Id, RoomId, Amount, Note, PayerId, CreatedAt)
-                        VALUES (@Id, @RoomId, @Amount, @Note, @PayerId, @CreatedAt);
-                """;
-
             var expenseGuid = Guid.NewGuid();
             var distributions = ExpenseUtils.SplitAmount([.. participants.Select(p => p.Id)], expense.Amount);
 
+            string expenseCommandText = """
+                                        INSERT INTO Expenses (Id, RoomId, Amount, Note, PayerId, CreatedAt)
+                                            VALUES (@Id, @RoomId, @Amount, @Note, @PayerId, @CreatedAt);
+                                    """;
+            string expenseEntryCommandText = """
+                                                 INSERT INTO ExpenseEntries (Id, ExpenseId, ParticipantId, Share)
+                                                     VALUES (@Id, @ExpenseId, @ParticipantId, @Share);
+                                             """;
+
+            var parameters = distributions.Select(d =>
+                new
+                {
+                    Id = Guid.NewGuid(),
+                    ExpenseId = expenseGuid,
+                    ParticipantId = d.Key,
+                    Share = d.Value,
+                }
+            );
+
+            var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            var expenseCommand = new CommandDefinition(expenseCommandText, new
+            {
+                Id = expenseGuid,
+                expense.RoomId,
+                expense.Amount,
+                expense.Note,
+                expense.PayerId,
+                CreatedAt = DateTime.UtcNow
+            }, transaction, cancellationToken: cancellationToken);
+
+            var expenseEntryCommandDefinition = new CommandDefinition(
+                expenseEntryCommandText,
+                parameters,
+                transaction,
+                cancellationToken: cancellationToken);
+
             try
             {
-                await connection.ExecuteAsync(expenseCommand, new
-                {
-                    Id = expenseGuid,
-                    expense.RoomId,
-                    expense.Amount,
-                    expense.Note,
-                    expense.PayerId,
-                    CreatedAt = DateTime.UtcNow
-                }, transaction);
+                await connection.ExecuteAsync(expenseCommand);
 
-                string expenseEntryCommand = """
-                    INSERT INTO ExpenseEntries (Id, ExpenseId, ParticipantId, Share)
-                        VALUES (@Id, @ExpenseId, @ParticipantId, @Share);
-                """;
-
-                var parameters = distributions.Select(d =>
-                    new
-                    {
-                        Id = Guid.NewGuid(),
-                        ExpenseId = expenseGuid,
-                        ParticipantId = d.Key,
-                        Share = d.Value,
-                    }
-                );
-
-                await connection.ExecuteAsync(expenseEntryCommand, parameters, transaction);
+                await connection.ExecuteAsync(expenseEntryCommandDefinition);
             }
             catch (DbException ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
 
-                logger.LogError(ex, "Error occured while creating new expense with id: {expeseId}", expenseGuid);
+                logger.LogError(ex, "Error occured while creating new expense with id: {expenseId}", expenseGuid);
                 throw;
             }
 
@@ -68,15 +74,16 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
         {
             await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
-            string command = """
-                    SELECT Id, RoomId, Amount, Note, PayerId, IsReverted, RevertedAt, CreatedAt
-                        FROM Expenses
-                        WHERE RoomId = @RoomId;
-                """;
+            string commandText = """
+                                 SELECT Id, RoomId, Amount, Note, PayerId, IsReverted, RevertedAt, CreatedAt
+                                     FROM Expenses
+                                     WHERE RoomId = @RoomId;
+                             """;
 
             try
             {
-                return [.. (await connection.QueryAsync<Expense>(command, new { RoomId = roomId }))];
+                var command = new CommandDefinition(commandText, new { RoomId = roomId }, cancellationToken: cancellationToken);
+                return [.. (await connection.QueryAsync<Expense>(command))];
             }
             catch (DbException ex)
             {
@@ -91,23 +98,30 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
 
             var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
-            string revertExpenseCommand = """
-                    UPDATE Expenses
-                        SET IsReverted = 1,
-                            RevertedAt = @RevertedAt
-                        WHERE Id = @ExpenseId;
-                """;
+            string revertExpenseCommandText = """
+                                              UPDATE Expenses
+                                                  SET IsReverted = 1,
+                                                      RevertedAt = @RevertedAt
+                                                  WHERE Id = @ExpenseId;
+                                          """;
+            string deleteExpenseEntryCommandText = """
+                                                   DELETE FROM ExpenseEntries
+                                                       WHERE ExpenseId = @ExpenseId;
+                                               """;
 
-            string deleteExpenseEntryCommand = """
-                    DELETE FROM ExpenseEntries
-                        WHERE ExpenseId = @ExpenseId;
-                """;
+            var revertCommandDefinition = new CommandDefinition(revertExpenseCommandText, new
+            {
+                RevertedAt = DateTime.UtcNow,
+                ExpenseId = expenseId
+            }, transaction, cancellationToken: cancellationToken);
+            var deleteCommandDefinition = new CommandDefinition(deleteExpenseEntryCommandText, new
+            { ExpenseId = expenseId }, transaction, cancellationToken: cancellationToken);
 
             try
             {
-                await connection.ExecuteAsync(revertExpenseCommand, new { RevertedAt = DateTime.UtcNow, ExpenseId = expenseId }, transaction);
+                await connection.ExecuteAsync(revertCommandDefinition);
 
-                await connection.ExecuteAsync(deleteExpenseEntryCommand, new { ExpenseId = expenseId }, transaction);
+                await connection.ExecuteAsync(deleteCommandDefinition);
             }
             catch (DbException ex)
             {

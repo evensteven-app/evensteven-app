@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/docs/">
     <File Path="docs/001-hybrid-architecture.md" />
+    <File Path="docs/002-test-coverage-analysis.md" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/EvenSteven.Api/EvenSteven.Api.csproj" />

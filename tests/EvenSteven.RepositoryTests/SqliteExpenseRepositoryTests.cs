@@ -8,7 +8,6 @@ namespace EvenSteven.RepositoryTests
         private List<Room> _rooms;
         private List<Participant> _participants;
         private List<Expense> _expenses;
-
         private List<ExpenseEntry> _expenseEntries;
 
         private async Task<List<ExpenseEntry>> GetExpenseEntriesByExpenseId(Guid expenseId)
@@ -16,10 +15,10 @@ namespace EvenSteven.RepositoryTests
             await using var connection = await fixture.ConnectionFactory.CreateOpenConnectionAsync(TestContext.Current.CancellationToken);
 
             string command = """
-                SELECT Id, ExpenseId, ParticipantId, Share
-                    FROM ExpenseEntries
-                    WHERE Id = @ExpenseId;
-            """;
+                                 SELECT Id, ExpenseId, ParticipantId, Share
+                                     FROM ExpenseEntries
+                                     WHERE ExpenseId = @ExpenseId;
+                             """;
 
             return [.. await connection.QueryAsync<ExpenseEntry>(command, new { ExpenseId = expenseId })];
         }
@@ -29,9 +28,9 @@ namespace EvenSteven.RepositoryTests
             await using var connection = await fixture.ConnectionFactory.CreateOpenConnectionAsync(TestContext.Current.CancellationToken);
 
             string command = """
-                SELECT Id, RoomId, Amount, Note, PayerId, IsReverted, RevertedAt, CreatedAt
-                    FROM Expenses;
-            """;
+                                 SELECT Id, RoomId, Amount, Note, PayerId, IsReverted, RevertedAt, CreatedAt
+                                     FROM Expenses;
+                             """;
 
             return [.. await connection.QueryAsync<Expense>(command)];
         }
@@ -41,9 +40,9 @@ namespace EvenSteven.RepositoryTests
             await using var connection = await fixture.ConnectionFactory.CreateOpenConnectionAsync(TestContext.Current.CancellationToken);
 
             string command = """
-                SELECT Id, ExpenseId, ParticipantId, Share
-                    FROM ExpenseEntries;
-            """;
+                                 SELECT Id, ExpenseId, ParticipantId, Share
+                                     FROM ExpenseEntries;
+                             """;
 
             return [.. await connection.QueryAsync<ExpenseEntry>(command)];
         }
@@ -56,25 +55,25 @@ namespace EvenSteven.RepositoryTests
         public async ValueTask InitializeAsync()
         {
             _rooms = [
-                new (Guid.NewGuid(), "Test room 1", Guid.NewGuid(), "AABBCCDD", "PasswordHash 1", 1, DateTime.UtcNow),
-                new (Guid.NewGuid(), "Test room 2", Guid.NewGuid(), "BBCCDDEE", "PasswordHash 2", 1, DateTime.UtcNow)
+                new (new Guid("00000000-0000-0000-0000-000000000101"), "Test room 1", new Guid("00000000-0000-0000-0000-000000000102"), "AABBCCDD", "PasswordHash 1", 1, DateTime.UtcNow),
+                new (new Guid("00000000-0000-0000-0000-000000000103"), "Test room 2", new Guid("00000000-0000-0000-0000-000000000104"), "BBCCDDEE", "PasswordHash 2", 1, DateTime.UtcNow)
             ];
 
             _participants = [
-                new (Guid.NewGuid(), _rooms[0].Id, "Test user 1", "DAIF12RE", -1000),
-                new (Guid.NewGuid(), _rooms[0].Id, "Test user 2", "DAUF13RU", 1000),
-                new (Guid.NewGuid(), _rooms[1].Id, "Test user 3", "DAIRDAAR", 0)
+                new (new Guid("00000000-0000-0000-0000-000000000111"), _rooms[0].Id, "Test user 1", "DAIF12RE", 1000),
+                new (new Guid("00000000-0000-0000-0000-000000000112"), _rooms[0].Id, "Test user 2", "DAUF13RU", -1000),
+                new (new Guid("00000000-0000-0000-0000-000000000113"), _rooms[1].Id, "Test user 3", "DAIRDAAR", 0)
             ];
 
             _expenses = [
-                new (Guid.NewGuid(), _rooms[0].Id, 2000, "Test note", _participants[0].Id, false, null, DateTime.UtcNow.AddDays(-1)),
-                new (Guid.NewGuid(), _rooms[1].Id, 5000, "Test note 2", _participants[2].Id, true,
+                new (new Guid("00000000-0000-0000-0000-000000000121"), _rooms[0].Id, 2000, "Test note", _participants[0].Id, false, null, DateTime.UtcNow.AddDays(-1)),
+                new (new Guid("00000000-0000-0000-0000-000000000122"), _rooms[1].Id, 5000, "Test note 2", _participants[2].Id, true,
                     DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(-2))
             ];
 
             _expenseEntries = [
-                new (Guid.NewGuid(), _expenses[0].Id, _participants[0].Id, 1000),
-                new (Guid.NewGuid(), _expenses[0].Id, _participants[1].Id, 1000),
+                new (new Guid("00000000-0000-0000-0000-000000000131"), _expenses[0].Id, _participants[0].Id, 1000),
+                new (new Guid("00000000-0000-0000-0000-000000000132"), _expenses[0].Id, _participants[1].Id, 1000),
             ];
 
             await using var connection = await fixture.ConnectionFactory.CreateOpenConnectionAsync(TestContext.Current.CancellationToken);
@@ -108,7 +107,7 @@ namespace EvenSteven.RepositoryTests
         [Fact]
         public async Task AddExpense_ValidData_CreateExpenseAndExpenseEntries()
         {
-            var newExpense = new Expense(Guid.NewGuid(), _rooms[1].Id, 1000, "Test new note", _participants[2].Id,
+            var newExpense = new Expense(new Guid("00000000-0000-0000-0000-000000000141"), _rooms[1].Id, 1000, "Test new note", _participants[2].Id,
                 false, null, DateTime.UtcNow);
 
             await fixture.ExpenseRepository.AddExpenseAsync(newExpense, [.. _participants.Where(p => p.RoomId == _rooms[1].Id)], TestContext.Current.CancellationToken);
@@ -130,7 +129,7 @@ namespace EvenSteven.RepositoryTests
         [Fact]
         public async Task AddExpense_ValidData_SplitAmountAmongParticipants()
         {
-            var newExpense = new Expense(Guid.NewGuid(), _rooms[0].Id, 1000, "Test split note", _participants[0].Id,
+            var newExpense = new Expense(new Guid("00000000-0000-0000-0000-000000000142"), _rooms[0].Id, 1000, "Test split note", _participants[0].Id,
                 false, null, DateTime.UtcNow);
 
             var roomParticipants = _participants.Where(p => p.RoomId == _rooms[0].Id).ToList();
@@ -165,7 +164,7 @@ namespace EvenSteven.RepositoryTests
         [Fact]
         public async Task GetExpenses_UnknownId_ReturnEmptyList()
         {
-            var expenses = await fixture.ExpenseRepository.GetExspensesByRoomAsync(Guid.NewGuid(), TestContext.Current.CancellationToken);
+            var expenses = await fixture.ExpenseRepository.GetExspensesByRoomAsync(new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"), TestContext.Current.CancellationToken);
 
             Assert.Empty(expenses);
         }
@@ -192,7 +191,7 @@ namespace EvenSteven.RepositoryTests
         [Fact]
         public async Task RevertExpense_InvalidExpenseId_DoNothing()
         {
-            await fixture.ExpenseRepository.RevertExpenseAsync(Guid.NewGuid(), TestContext.Current.CancellationToken);
+            await fixture.ExpenseRepository.RevertExpenseAsync(new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"), TestContext.Current.CancellationToken);
 
             var allExpenses = await GetAllExpenses();
             var allExpenseEntries = await GetAllExpenseEntries();

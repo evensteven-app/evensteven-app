@@ -9,14 +9,16 @@
                 return [];
             }
 
-            participantIds.Sort();
-            var baseShare = amount / participantIds.Count;
-            var reminder = amount % participantIds.Count;
+            var sortedParticipantIds = participantIds.ToList();
+            sortedParticipantIds.Sort();
+
+            var baseShare = amount / sortedParticipantIds.Count;
+            var reminder = amount % sortedParticipantIds.Count;
 
             var distributions = new Dictionary<Guid, long>();
-            for(int i = 0; i < participantIds.Count; i++)
+            for(int i = 0; i < sortedParticipantIds.Count; i++)
             {
-                var id = participantIds[i];
+                var id = sortedParticipantIds[i];
                 distributions.Add(id, baseShare + (i < reminder ? 1 : 0));
             }
 

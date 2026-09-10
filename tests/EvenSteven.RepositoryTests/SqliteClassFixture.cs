@@ -11,6 +11,7 @@ namespace EvenSteven.RepositoryTests
         public IDbConnectionFactory ConnectionFactory;
         public IRoomRepository RoomRepository;
         public IExpenseRepository ExpenseRepository;
+        public IParticipantRepository ParticipantRepository;
 
         public SqliteClassFixture()
         {
@@ -22,6 +23,7 @@ namespace EvenSteven.RepositoryTests
             ConnectionFactory = connectionFactory;
             RoomRepository = new SqliteRoomRepository(connectionFactory, logger);
             ExpenseRepository = new SqliteExpenseRepository(connectionFactory, logger);
+            ParticipantRepository = new SqliteParticipantRepository(connectionFactory, logger);
         }
 
         public ValueTask DisposeAsync()

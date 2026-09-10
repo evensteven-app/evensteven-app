@@ -13,6 +13,7 @@ namespace EvenSteven.Infrastructure.Storage.TypeHandlers
             SqlMapper.AddTypeHandler(new SqliteGuidTypeHandler());
             SqlMapper.AddTypeHandler(new SqliteDateTimeTypeHandler());
             SqlMapper.AddTypeHandler(new SqliteBoolTypeHandler());
+            SqlMapper.AddTypeHandler(new SqliteInt64TypeHandler());
         }
     }
 }

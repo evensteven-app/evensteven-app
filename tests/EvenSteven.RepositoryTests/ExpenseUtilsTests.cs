@@ -14,7 +14,7 @@ namespace EvenSteven.RepositoryTests
             List<Guid> participantIds = [];
             for (int i = 0; i < participantsNumber; i++)
             {
-                participantIds.Add(Guid.NewGuid());
+                participantIds.Add(new Guid($"00000000-0000-0000-0000-{i:D12}"));
             }
 
             var distribution = ExpenseUtils.SplitAmount(participantIds, amount);

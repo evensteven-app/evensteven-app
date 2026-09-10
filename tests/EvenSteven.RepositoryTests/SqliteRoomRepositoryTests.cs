@@ -6,8 +6,8 @@ namespace EvenSteven.RepositoryTests
     public class SqliteRoomRepositoryTests(SqliteClassFixture fixture) : IAsyncLifetime, IClassFixture<SqliteClassFixture>
     {
         private List<Room> _mockRoom = [
-                new(Guid.NewGuid(), "Test room", Guid.NewGuid(), "AABBCCDD", "TestPasswordHash", 1, DateTime.UtcNow),
-                new(Guid.NewGuid(), "Test room 2", Guid.NewGuid(), "BBCCDDEE", "TestPasswordHash 2", 1, DateTime.UtcNow)
+                new(new Guid("00000000-0000-0000-0000-000000000001"), "Test room", new Guid("00000000-0000-0000-0000-000000000002"), "AABBCCDD", "TestPasswordHash", 1, DateTime.UtcNow),
+                new(new Guid("00000000-0000-0000-0000-000000000003"), "Test room 2", new Guid("00000000-0000-0000-0000-000000000004"), "BBCCDDEE", "TestPasswordHash 2", 1, DateTime.UtcNow)
             ];
 
         public async ValueTask DisposeAsync()
@@ -20,9 +20,9 @@ namespace EvenSteven.RepositoryTests
             await using var connection = await fixture.ConnectionFactory.CreateOpenConnectionAsync(TestContext.Current.CancellationToken);
 
             string command = """
-                INSERT INTO Rooms (Id, Title, EditKey, InviteCode, PasswordHash, Version, CreatedAt)
-                VALUES (@Id, @Title, @EditKey, @InviteCode, @PasswordHash, @Version, @CreatedAt);
-                """;
+                             INSERT INTO Rooms (Id, Title, EditKey, InviteCode, PasswordHash, Version, CreatedAt)
+                             VALUES (@Id, @Title, @EditKey, @InviteCode, @PasswordHash, @Version, @CreatedAt);
+                             """;
 
             await connection.ExecuteAsync(command, _mockRoom);
         }
@@ -38,7 +38,7 @@ namespace EvenSteven.RepositoryTests
         [Fact]
         public async Task GetRoom_NonExistingGuid_ReturnsNull()
         {
-            var room = await fixture.RoomRepository.GetRoomByIdAsync(Guid.NewGuid(), TestContext.Current.CancellationToken);
+            var room = await fixture.RoomRepository.GetRoomByIdAsync(new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"), TestContext.Current.CancellationToken);
 
             Assert.Null(room);
         }
@@ -46,7 +46,7 @@ namespace EvenSteven.RepositoryTests
         [Fact]
         public async Task CreateRoom_ValidParameters_ReturnNewRoomId()
         {
-            var newRoom = new Room(Guid.Empty, "New room", Guid.NewGuid(), "AABBCCEE", "NewPasswordHash", 1, DateTime.UtcNow);
+            var newRoom = new Room(Guid.Empty, "New room", new Guid("00000000-0000-0000-0000-000000000005"), "AABBCCEE", "NewPasswordHash", 1, DateTime.UtcNow);
             var roomId = await fixture.RoomRepository.CreateRoomAsync(newRoom, TestContext.Current.CancellationToken);
 
             var room = await fixture.RoomRepository.GetRoomByIdAsync(roomId, TestContext.Current.CancellationToken);

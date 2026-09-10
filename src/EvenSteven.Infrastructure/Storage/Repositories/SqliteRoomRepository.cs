@@ -13,24 +13,26 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
         {
             await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
-            string command = """
-                INSERT INTO Rooms (Id, Title, EditKey, InviteCode, PasswordHash, CreatedAt)
-                    VALUES (@Id, @Title, @EditKey, @InviteCode, @PasswordHash, @CreatedAt);
-                """;
+            string commandText = """
+                             INSERT INTO Rooms (Id, Title, EditKey, InviteCode, PasswordHash, CreatedAt)
+                                 VALUES (@Id, @Title, @EditKey, @InviteCode, @PasswordHash, @CreatedAt);
+                             """;
 
             var roomId = Guid.NewGuid();
 
+            var command = new CommandDefinition(commandText, new
+            {
+                Id = roomId,
+                room.Title,
+                room.EditKey,
+                room.InviteCode,
+                room.PasswordHash,
+                CreatedAt = DateTime.UtcNow
+            }, cancellationToken: cancellationToken);
+
             try
             {
-                await connection.ExecuteAsync(command, new
-                {
-                    Id = roomId,
-                    room.Title,
-                    room.EditKey,
-                    room.InviteCode,
-                    room.PasswordHash,
-                    CreatedAt = DateTime.UtcNow
-                });
+                await connection.ExecuteAsync(command);
             }
             catch (DbException ex)
             {
@@ -46,15 +48,16 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
         {
             await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
-            string command = """
-                SELECT Id, Title, EditKey, InviteCode, PasswordHash, Version, CreatedAt 
-                    FROM Rooms
-                    WHERE Id = @id;
-                """;
+            string commandText = """
+                             SELECT Id, Title, EditKey, InviteCode, PasswordHash, Version, CreatedAt 
+                                 FROM Rooms
+                                 WHERE Id = @id;
+                             """;
 
             try
             {
-                return await connection.QueryFirstOrDefaultAsync<Room>(command, new { id });
+                var command = new CommandDefinition(commandText, new { id }, cancellationToken: cancellationToken);
+                return await connection.QueryFirstOrDefaultAsync<Room>(command);
             }
             catch (DbException ex)
             {
