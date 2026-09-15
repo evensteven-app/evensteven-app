@@ -1,9 +1,10 @@
-﻿using System.Data;
+﻿using System.Data.Common;
 
-namespace EvenSteven.Infrastructure.Storage.ConnectionFActory
+namespace EvenSteven.Infrastructure.Storage.ConnectionFactory
 {
     public interface IDbConnectionFactory
     {
-        IDbConnection CreateConnection();
+        DbConnection CreateConnection();
+        Task<DbConnection> CreateOpenConnectionAsync(CancellationToken cancellationToken);
     }
 }
