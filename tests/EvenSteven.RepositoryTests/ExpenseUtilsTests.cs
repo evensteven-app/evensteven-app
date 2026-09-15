@@ -9,7 +9,7 @@ namespace EvenSteven.RepositoryTests
         [InlineData(2, 1000, new long[] { 500, 500 })]
         [InlineData(3, 1000, new long[] { 334, 333, 333 })]
         [InlineData(7, 5000, new long[] { 715, 715, 714, 714, 714, 714, 714 })]
-        public async Task SplitAmount_ReturnValidShareByParticipant(int participantsNumber, long amount, long[] expectedValues)
+        public void SplitAmount_ReturnValidShareByParticipant(int participantsNumber, long amount, long[] expectedValues)
         {
             List<Guid> participantIds = [];
             for (int i = 0; i < participantsNumber; i++)

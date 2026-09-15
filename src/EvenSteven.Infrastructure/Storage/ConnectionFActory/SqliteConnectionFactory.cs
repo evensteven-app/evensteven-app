@@ -8,7 +8,6 @@ namespace EvenSteven.Infrastructure.Storage.ConnectionFactory
     {
         private readonly string? _connectionString;
 
-
         public SqliteConnectionFactory(string connectionString)
         {
             _connectionString = connectionString;

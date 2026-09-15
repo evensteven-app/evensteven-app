@@ -8,11 +8,20 @@ using System.Data.Common;
 
 namespace EvenSteven.Infrastructure.Storage.Repositories
 {
-    public class SqliteExpenseRepository(IDbConnectionFactory connectionFactory, ILogger logger) : IExpenseRepository
+    internal class SqliteExpenseRepository : IExpenseRepository
     {
+        private readonly IDbConnectionFactory _connectionFactory;
+        private readonly ILogger<SqliteExpenseRepository> _logger;
+
+        public SqliteExpenseRepository(IDbConnectionFactory connectionFactory, ILogger<SqliteExpenseRepository> logger)
+        {
+            _connectionFactory = connectionFactory;
+            _logger = logger;
+        }
+
         public async Task AddExpenseAsync(Expense expense, List<Participant> participants, CancellationToken cancellationToken)
         {
-            await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+            await using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
             var expenseGuid = Guid.NewGuid();
             var distributions = ExpenseUtils.SplitAmount([.. participants.Select(p => p.Id)], expense.Amount);
@@ -63,16 +72,16 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
             {
                 await transaction.RollbackAsync(cancellationToken);
 
-                logger.LogError(ex, "Error occured while creating new expense with id: {expenseId}", expenseGuid);
+                _logger.LogError(ex, "Error occurred while creating new expense with id: {expenseId}", expenseGuid);
                 throw;
             }
 
             await transaction.CommitAsync(cancellationToken);
         }
 
-        public async Task<List<Expense>> GetExspensesByRoomAsync(Guid roomId, CancellationToken cancellationToken)
+        public async Task<List<Expense>> GetExpensesByRoomAsync(Guid roomId, CancellationToken cancellationToken)
         {
-            await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+            await using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
             string commandText = """
                                  SELECT Id, RoomId, Amount, Note, PayerId, IsReverted, RevertedAt, CreatedAt
@@ -87,14 +96,14 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
             }
             catch (DbException ex)
             {
-                logger.LogError(ex, "Error occured while getting room expenses with roomId: {roomId}", roomId);
+                _logger.LogError(ex, "Error occurred while getting room expenses with roomId: {roomId}", roomId);
                 throw;
             }
         }
 
         public async Task RevertExpenseAsync(Guid expenseId, CancellationToken cancellationToken)
         {
-            await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+            await using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
             var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
@@ -127,7 +136,7 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
             {
                 await transaction.RollbackAsync(cancellationToken);
 
-                logger.LogError(ex, "Error occured while reverting expense with id: {expenseId}", expenseId);
+                _logger.LogError(ex, "Error occurred while reverting expense with id: {expenseId}", expenseId);
                 throw;
             }
 

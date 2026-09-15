@@ -18,12 +18,11 @@ namespace EvenSteven.RepositoryTests
             Database = TestDatabase.Create();
 
             var connectionFactory = new SqliteConnectionFactory(Database.ConnectionString);
-            var logger = new FakeLogger<SqliteRoomRepository>();
 
             ConnectionFactory = connectionFactory;
-            RoomRepository = new SqliteRoomRepository(connectionFactory, logger);
-            ExpenseRepository = new SqliteExpenseRepository(connectionFactory, logger);
-            ParticipantRepository = new SqliteParticipantRepository(connectionFactory, logger);
+            RoomRepository = new SqliteRoomRepository(connectionFactory, new FakeLogger<SqliteRoomRepository>());
+            ExpenseRepository = new SqliteExpenseRepository(connectionFactory, new FakeLogger<SqliteExpenseRepository>());
+            ParticipantRepository = new SqliteParticipantRepository(connectionFactory, new FakeLogger<SqliteParticipantRepository>());
         }
 
         public ValueTask DisposeAsync()

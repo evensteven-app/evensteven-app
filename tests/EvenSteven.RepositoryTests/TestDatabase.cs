@@ -39,7 +39,7 @@ namespace EvenSteven.RepositoryTests
             await connection.ExecuteAsync("PRAGMA foreign_keys = OFF;");
 
             var tables = await connection.QueryAsync<string>(
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name != 'sqlite_sequence';");
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT IN ('sqlite_sequence', 'VersionInfo');");
 
             foreach (var table in tables)
             {

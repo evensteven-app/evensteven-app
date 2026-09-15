@@ -117,7 +117,7 @@ namespace EvenSteven.RepositoryTests
             await fixture.ExpenseRepository.AddExpenseAsync(newExpense, [.. _participants.Where(p => p.RoomId == _rooms[1].Id)], TestContext.Current.CancellationToken);
 
             var expenses = (await fixture.ExpenseRepository
-                .GetExspensesByRoomAsync(_rooms[1].Id, TestContext.Current.CancellationToken))
+                .GetExpensesByRoomAsync(_rooms[1].Id, TestContext.Current.CancellationToken))
                 .FirstOrDefault(ex => ex.Note == newExpense.Note);
             var expenseEntries = await GetAllExpenseEntries();
 
@@ -141,7 +141,7 @@ namespace EvenSteven.RepositoryTests
             await fixture.ExpenseRepository.AddExpenseAsync(newExpense, roomParticipants, TestContext.Current.CancellationToken);
 
             var expense = (await fixture.ExpenseRepository
-                .GetExspensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken))
+                .GetExpensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken))
                 .FirstOrDefault(ex => ex.Note == newExpense.Note);
 
             Assert.NotNull(expense);
@@ -178,7 +178,7 @@ namespace EvenSteven.RepositoryTests
                     fixture.ExpenseRepository.AddExpenseAsync(newExpense, [.. _participants.Where(p => p.RoomId == _rooms[0].Id)], TestContext.Current.CancellationToken));
 
                 var expenses = (await fixture.ExpenseRepository
-                    .GetExspensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken))
+                    .GetExpensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken))
                     .Where(e => e.Id == newExpense.Id)
                     .ToList();
 
@@ -209,7 +209,7 @@ namespace EvenSteven.RepositoryTests
         {
             var poisonFactory = new SqliteConnectionFactory("Data Source=:memory:;Mode=ReadOnly;");
 
-            var isolatedRepo = new SqliteExpenseRepository(poisonFactory, new FakeLogger());
+            var isolatedRepo = new SqliteExpenseRepository(poisonFactory, new FakeLogger<SqliteExpenseRepository>());
 
             var newExpense = new Expense(Guid.Empty, _rooms[0].Id, 1000, "Poison note", _participants[0].Id,
                 false, null, DateTime.UtcNow);
@@ -221,7 +221,7 @@ namespace EvenSteven.RepositoryTests
         [Fact]
         public async Task GetExpenses_ValidId_ReturnAllExpensesForGivenRoom()
         {
-            var expenses = await fixture.ExpenseRepository.GetExspensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken);
+            var expenses = await fixture.ExpenseRepository.GetExpensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken);
 
             Assert.Equal(_expenses.Where(ex => ex.RoomId == _rooms[0].Id), expenses);
         }
@@ -229,7 +229,7 @@ namespace EvenSteven.RepositoryTests
         [Fact]
         public async Task GetExpenses_UnknownId_ReturnEmptyList()
         {
-            var expenses = await fixture.ExpenseRepository.GetExspensesByRoomAsync(new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"), TestContext.Current.CancellationToken);
+            var expenses = await fixture.ExpenseRepository.GetExpensesByRoomAsync(new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"), TestContext.Current.CancellationToken);
 
             Assert.Empty(expenses);
         }
@@ -237,7 +237,7 @@ namespace EvenSteven.RepositoryTests
         [Fact]
         public async Task GetExpenses_RevertedExpenses_AreReturned()
         {
-            var expenses = await fixture.ExpenseRepository.GetExspensesByRoomAsync(_rooms[1].Id, TestContext.Current.CancellationToken);
+            var expenses = await fixture.ExpenseRepository.GetExpensesByRoomAsync(_rooms[1].Id, TestContext.Current.CancellationToken);
 
             Assert.Contains(expenses, e => e.IsReverted);
         }
@@ -250,7 +250,7 @@ namespace EvenSteven.RepositoryTests
             await token.CancelAsync();
 
             await Assert.ThrowsAsync<TaskCanceledException>(() =>
-                fixture.ExpenseRepository.GetExspensesByRoomAsync(_rooms[0].Id, token.Token));
+                fixture.ExpenseRepository.GetExpensesByRoomAsync(_rooms[0].Id, token.Token));
         }
 
         [Fact]
@@ -258,10 +258,10 @@ namespace EvenSteven.RepositoryTests
         {
             var poisonFactory = new SqliteConnectionFactory("Data Source=:memory:;Mode=ReadOnly;");
 
-            var isolatedRepo = new SqliteExpenseRepository(poisonFactory, new FakeLogger());
+            var isolatedRepo = new SqliteExpenseRepository(poisonFactory, new FakeLogger<SqliteExpenseRepository>());
 
             await Assert.ThrowsAnyAsync<DbException>(() =>
-                isolatedRepo.GetExspensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken));
+                isolatedRepo.GetExpensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken));
         }
 
         [Fact]
@@ -270,7 +270,7 @@ namespace EvenSteven.RepositoryTests
             await fixture.ExpenseRepository.RevertExpenseAsync(_expenses[0].Id, TestContext.Current.CancellationToken);
 
             var expense = (await fixture.ExpenseRepository
-                .GetExspensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken))
+                .GetExpensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken))
                 .FirstOrDefault(ex => ex.Id == _expenses[0].Id);
             var expenseEntries = await GetExpenseEntriesByExpenseId(_expenses[0].Id);
 
@@ -289,7 +289,7 @@ namespace EvenSteven.RepositoryTests
             await fixture.ExpenseRepository.RevertExpenseAsync(_expenses[1].Id, TestContext.Current.CancellationToken);
 
             var expense = (await fixture.ExpenseRepository
-                .GetExspensesByRoomAsync(_rooms[1].Id, TestContext.Current.CancellationToken))
+                .GetExpensesByRoomAsync(_rooms[1].Id, TestContext.Current.CancellationToken))
                 .FirstOrDefault(e => e.Id == _expenses[1].Id);
 
             Assert.NotNull(expense);
@@ -302,7 +302,7 @@ namespace EvenSteven.RepositoryTests
             await fixture.ExpenseRepository.RevertExpenseAsync(_expenses[0].Id, TestContext.Current.CancellationToken);
 
             var allExpenses = await fixture.ExpenseRepository
-                .GetExspensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken);
+                .GetExpensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken);
 
             var revertedExpense = allExpenses.First(e => e.Id == _expenses[0].Id);
             var otherExpenses = allExpenses.Where(e => e.Id != _expenses[0].Id).ToList();
@@ -341,7 +341,7 @@ namespace EvenSteven.RepositoryTests
                     fixture.ExpenseRepository.RevertExpenseAsync(_expenses[0].Id, TestContext.Current.CancellationToken));
 
                 var expense = (await fixture.ExpenseRepository
-                    .GetExspensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken))
+                    .GetExpensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken))
                     .FirstOrDefault(e => e.Id == _expenses[0].Id);
 
                 Assert.NotNull(expense);
@@ -370,7 +370,7 @@ namespace EvenSteven.RepositoryTests
         {
             var poisonFactory = new SqliteConnectionFactory("Data Source=:memory:;Mode=ReadOnly;");
 
-            var isolatedRepo = new SqliteExpenseRepository(poisonFactory, new FakeLogger());
+            var isolatedRepo = new SqliteExpenseRepository(poisonFactory, new FakeLogger<SqliteExpenseRepository>());
 
             await Assert.ThrowsAnyAsync<DbException>(() =>
                 isolatedRepo.RevertExpenseAsync(_expenses[0].Id, TestContext.Current.CancellationToken));

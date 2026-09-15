@@ -7,11 +7,20 @@ using System.Data.Common;
 
 namespace EvenSteven.Infrastructure.Storage.Repositories
 {
-    internal class SqliteRoomRepository(IDbConnectionFactory connectionFactory, ILogger logger) : IRoomRepository
+    internal class SqliteRoomRepository : IRoomRepository
     {
+        private readonly IDbConnectionFactory _connectionFactory;
+        private readonly ILogger<SqliteRoomRepository> _logger;
+
+        public SqliteRoomRepository(IDbConnectionFactory connectionFactory, ILogger<SqliteRoomRepository> logger)
+        {
+            _connectionFactory = connectionFactory;
+            _logger = logger;
+        }
+
         public async Task<Guid> CreateRoomAsync(Room room, CancellationToken cancellationToken)
         {
-            await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+            await using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
             string commandText = """
                              INSERT INTO Rooms (Id, Title, EditKey, InviteCode, PasswordHash, CreatedAt)
@@ -36,17 +45,17 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
             }
             catch (DbException ex)
             {
-                logger.LogError(exception: ex, message: "Error occured while creating new room");
+                _logger.LogError(exception: ex, message: "Error occurred while creating new room");
                 throw;
             }
 
-            logger.LogDebug("Successfully created room with id: {roomId}", roomId);
+            _logger.LogDebug("Successfully created room with id: {roomId}", roomId);
             return roomId;
         }
 
         public async Task<Room?> GetRoomByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+            await using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
             string commandText = """
                              SELECT Id, Title, EditKey, InviteCode, PasswordHash, Version, CreatedAt 
@@ -61,7 +70,7 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
             }
             catch (DbException ex)
             {
-                logger.LogError(exception: ex, message: "Error occured while getting room with id: {id}", id);
+                _logger.LogError(exception: ex, message: "Error occurred while getting room with id: {id}", id);
                 throw;
             }
         }

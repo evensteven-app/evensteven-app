@@ -7,11 +7,20 @@ using System.Data.Common;
 
 namespace EvenSteven.Infrastructure.Storage.Repositories
 {
-    public class SqliteParticipantRepository(IDbConnectionFactory connectionFactory, ILogger logger) : IParticipantRepository
+    internal class SqliteParticipantRepository : IParticipantRepository
     {
+        private readonly IDbConnectionFactory _connectionFactory;
+        private readonly ILogger<SqliteParticipantRepository> _logger;
+
+        public SqliteParticipantRepository(IDbConnectionFactory connectionFactory, ILogger<SqliteParticipantRepository> logger)
+        {
+            _connectionFactory = connectionFactory;
+            _logger = logger;
+        }
+
         public async Task<Guid> AddParticipantAsync(Participant participant, CancellationToken cancellationToken)
         {
-            await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+            await using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
             string commandText = """
                                  INSERT INTO Participants (Id, RoomId, Name, ParticipantKey)
@@ -35,7 +44,7 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
             }
             catch (DbException ex)
             {
-                logger.LogError(ex, "Error occured while creating new participant in room: {roomId}", participant.RoomId);
+                _logger.LogError(ex, "Error occurred while creating new participant in room: {roomId}", participant.RoomId);
                 throw;
             }
 
@@ -44,7 +53,7 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
 
         public async Task DeleteParticipantAsync(Guid participantId, CancellationToken cancellationToken)
         {
-            await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+            await using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
             string commandText = """
                                  DELETE FROM Participants
@@ -59,14 +68,14 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
             }
             catch (DbException ex)
             {
-                logger.LogError(ex, "Error occured while deleting participant with id: {participantId}", participantId);
+                _logger.LogError(ex, "Error occurred while deleting participant with id: {participantId}", participantId);
                 throw;
             }
         }
 
         public async Task<List<Participant>> GetParticipantsByRoomAsync(Guid roomId, CancellationToken cancellationToken)
         {
-            await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+            await using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
             string commandText = """
                                  WITH Shared AS (
@@ -102,14 +111,14 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
             }
             catch (DbException ex)
             {
-                logger.LogError(ex, "Error occured while getting participants in room: {roomId}", roomId);
+                _logger.LogError(ex, "Error occurred while getting participants in room: {roomId}", roomId);
                 throw;
             }
         }
 
         public async Task UpdateParticipantNameAsync(Guid participantId, string newName, CancellationToken cancellationToken)
         {
-            await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+            await using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
             string commandText = """
                                      UPDATE Participants
@@ -126,7 +135,7 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
             }
             catch (DbException ex)
             {
-                logger.LogError(ex, "Error occured while updating name to participant: {participantId}", participantId);
+                _logger.LogError(ex, "Error occurred while updating name to participant: {participantId}", participantId);
                 throw;
             }
         }

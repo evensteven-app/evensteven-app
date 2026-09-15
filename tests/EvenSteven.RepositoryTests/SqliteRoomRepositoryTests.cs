@@ -69,7 +69,7 @@ namespace EvenSteven.RepositoryTests
         {
             var poisonFactory = new SqliteConnectionFactory("Data Source=:memory:;Mode=ReadOnly;");
 
-            var isolatedRepo = new SqliteRoomRepository(poisonFactory, new FakeLogger());
+            var isolatedRepo = new SqliteRoomRepository(poisonFactory, new FakeLogger<SqliteRoomRepository>());
 
             await Assert.ThrowsAnyAsync<DbException>(() =>
                 isolatedRepo.CreateRoomAsync(new Room(Guid.Empty, "New room", new Guid("00000000-0000-0000-0000-000000000005"), "AABBCCEE", "NewPasswordHash", 1, DateTime.UtcNow), TestContext.Current.CancellationToken));
@@ -107,7 +107,7 @@ namespace EvenSteven.RepositoryTests
         {
             var poisonFactory = new SqliteConnectionFactory("Data Source=:memory:;Mode=ReadOnly;");
 
-            var isolatedRepo = new SqliteRoomRepository(poisonFactory, new FakeLogger());
+            var isolatedRepo = new SqliteRoomRepository(poisonFactory, new FakeLogger<SqliteRoomRepository>());
 
             await Assert.ThrowsAnyAsync<DbException>(() =>
                 isolatedRepo.GetRoomByIdAsync(new Guid("00000000-0000-0000-0000-000000000001"), TestContext.Current.CancellationToken));

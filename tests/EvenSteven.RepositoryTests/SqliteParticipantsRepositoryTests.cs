@@ -112,7 +112,7 @@ namespace EvenSteven.RepositoryTests
         {
             var poisonFactory = new SqliteConnectionFactory("Data Source=:memory:;Mode=ReadOnly;");
 
-            var isolatedRepo = new SqliteParticipantRepository(poisonFactory, new FakeLogger());
+            var isolatedRepo = new SqliteParticipantRepository(poisonFactory, new FakeLogger<SqliteParticipantRepository>());
 
             var newParticipant = new Participant(Guid.Empty, _rooms[0].Id, "New user", "NEWKEY", 0);
 
@@ -211,7 +211,7 @@ namespace EvenSteven.RepositoryTests
         {
             var poisonFactory = new SqliteConnectionFactory("Data Source=:memory:;Mode=ReadOnly;");
 
-            var isolatedRepo = new SqliteParticipantRepository(poisonFactory, new FakeLogger());
+            var isolatedRepo = new SqliteParticipantRepository(poisonFactory, new FakeLogger<SqliteParticipantRepository>());
 
             await Assert.ThrowsAnyAsync<DbException>(() =>
                 isolatedRepo.GetParticipantsByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken));
@@ -256,7 +256,7 @@ namespace EvenSteven.RepositoryTests
         {
             var poisonFactory = new SqliteConnectionFactory("Data Source=:memory:;Mode=ReadOnly;");
 
-            var isolatedRepo = new SqliteParticipantRepository(poisonFactory, new FakeLogger());
+            var isolatedRepo = new SqliteParticipantRepository(poisonFactory, new FakeLogger<SqliteParticipantRepository>());
 
             await Assert.ThrowsAnyAsync<DbException>(() =>
                 isolatedRepo.DeleteParticipantAsync(Guid.NewGuid(), TestContext.Current.CancellationToken));
@@ -299,7 +299,7 @@ namespace EvenSteven.RepositoryTests
         {
             var poisonFactory = new SqliteConnectionFactory("Data Source=:memory:;Mode=ReadOnly;");
 
-            var isolatedRepo = new SqliteParticipantRepository(poisonFactory, new FakeLogger());
+            var isolatedRepo = new SqliteParticipantRepository(poisonFactory, new FakeLogger<SqliteParticipantRepository>());
 
             await Assert.ThrowsAnyAsync<DbException>(() =>
                 isolatedRepo.UpdateParticipantNameAsync(Guid.NewGuid(), "New name", TestContext.Current.CancellationToken));
