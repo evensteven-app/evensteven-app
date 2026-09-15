@@ -10,13 +10,13 @@ namespace EvenSteven.Infrastructure.Storage.Migrations
         {
             Delete.Table("Rooms");
             Delete.Table("Participants");
-            Delete.Table("Events");
-            Delete.Table("EventEntries");
+            Delete.Table("Expenses");
+            Delete.Table("ExpenseEntries");
 
             //Delete.ForeignKey("FK_Rooms_Participants_RoomId");
-            //Delete.ForeignKey("FK_Rooms_Events_RoomId");
-            //Delete.ForeignKey("FK_Events_EventEntries_EventId");
-            //Delete.ForeignKey("FK_Participants_EventEntries_ParticipantId");
+            //Delete.ForeignKey("FK_Rooms_Expenses_RoomId");
+            //Delete.ForeignKey("FK_Expenses_ExpenseEntries_ExpenseId");
+            //Delete.ForeignKey("FK_Participants_ExpenseEntries_ParticipantId");
         }
 
         public override void Up()
@@ -57,14 +57,14 @@ namespace EvenSteven.Infrastructure.Storage.Migrations
             //    .ToTable("Rooms").PrimaryColumn("Id")
             //    .OnDelete(System.Data.Rule.Cascade);
 
-            //Create.ForeignKey("FK_Rooms_Events_RoomId")
-            //    .FromTable("Events").ForeignColumns("RoomId")
+            //Create.ForeignKey("FK_Rooms_Expenses_RoomId")
+            //    .FromTable("Expenses").ForeignColumns("RoomId")
             //    .ToTable("Rooms").PrimaryColumn("Id")
             //    .OnDelete(System.Data.Rule.Cascade);
 
-            //Create.ForeignKey("FK_Events_EventEntries_EventId")
-            //    .FromTable("EventEntries").ForeignColumn("EventId")
-            //    .ToTable("Events").PrimaryColumn("Id")
+            //Create.ForeignKey("FK_Expenses_ExpenseEntries_ExpenseId")
+            //    .FromTable("ExpenseEntries").ForeignColumn("ExpenseId")
+            //    .ToTable("Expenses").PrimaryColumn("Id")
             //    .OnDelete(System.Data.Rule.Cascade);
 
             //Create.ForeignKey("FK_Participants_EventEntries_ParticipantId")

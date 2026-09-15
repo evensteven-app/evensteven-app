@@ -4,7 +4,7 @@
     {
         public static Dictionary<Guid, long> SplitAmount(List<Guid> participantIds, long amount)
         {
-            if (participantIds.Count == 0)
+            if (participantIds.Count == 0 || amount < 0)
             {
                 return [];
             }

@@ -60,6 +60,7 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
             catch (DbException ex)
             {
                 logger.LogError(ex, "Error occured while deleting participant with id: {participantId}", participantId);
+                throw;
             }
         }
 
@@ -126,6 +127,7 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
             catch (DbException ex)
             {
                 logger.LogError(ex, "Error occured while updating name to participant: {participantId}", participantId);
+                throw;
             }
         }
     }

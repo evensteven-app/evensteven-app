@@ -1,5 +1,9 @@
 ﻿using Dapper;
+using EvenSteven.Infrastructure.Storage.ConnectionFactory;
+using EvenSteven.Infrastructure.Storage.Repositories;
 using EvenSteven.Shared.Models;
+using Microsoft.Extensions.Logging.Testing;
+using System.Data.Common;
 
 namespace EvenSteven.RepositoryTests
 {
@@ -154,6 +158,67 @@ namespace EvenSteven.RepositoryTests
         }
 
         [Fact]
+        public async Task AddExpense_RollbackOnDbException_ExpenseNotSaved()
+        {
+            await using var connection = await fixture.ConnectionFactory.CreateOpenConnectionAsync(TestContext.Current.CancellationToken);
+            await connection.ExecuteAsync("""
+                CREATE TRIGGER deny_expense_entries_insert
+                    BEFORE INSERT ON ExpenseEntries
+                BEGIN
+                    SELECT RAISE(FAIL, 'denied');
+                END;
+            """);
+
+            var newExpense = new Expense(Guid.NewGuid(), _rooms[0].Id, 1000, "Rollback note", _participants[0].Id,
+                false, null, DateTime.UtcNow);
+
+            try
+            {
+                await Assert.ThrowsAnyAsync<DbException>(() =>
+                    fixture.ExpenseRepository.AddExpenseAsync(newExpense, [.. _participants.Where(p => p.RoomId == _rooms[0].Id)], TestContext.Current.CancellationToken));
+
+                var expenses = (await fixture.ExpenseRepository
+                    .GetExspensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken))
+                    .Where(e => e.Id == newExpense.Id)
+                    .ToList();
+
+                Assert.Empty(expenses);
+            }
+            finally
+            {
+                await connection.ExecuteAsync("DROP TRIGGER IF EXISTS deny_expense_entries_insert;");
+            }
+        }
+
+        [Fact]
+        public async Task AddExpense_CloseCancellationToken_ThrowsTaskCancelledException()
+        {
+            CancellationTokenSource token = new();
+
+            await token.CancelAsync();
+
+            var newExpense = new Expense(Guid.Empty, _rooms[0].Id, 1000, "Cancel note", _participants[0].Id,
+                false, null, DateTime.UtcNow);
+
+            await Assert.ThrowsAsync<TaskCanceledException>(() =>
+                fixture.ExpenseRepository.AddExpenseAsync(newExpense, [.. _participants.Where(p => p.RoomId == _rooms[0].Id)], token.Token));
+        }
+
+        [Fact]
+        public async Task AddExpense_InvalidDbState_ThrowsDbException()
+        {
+            var poisonFactory = new SqliteConnectionFactory("Data Source=:memory:;Mode=ReadOnly;");
+
+            var isolatedRepo = new SqliteExpenseRepository(poisonFactory, new FakeLogger());
+
+            var newExpense = new Expense(Guid.Empty, _rooms[0].Id, 1000, "Poison note", _participants[0].Id,
+                false, null, DateTime.UtcNow);
+
+            await Assert.ThrowsAnyAsync<DbException>(() =>
+                isolatedRepo.AddExpenseAsync(newExpense, [.. _participants.Where(p => p.RoomId == _rooms[0].Id)], TestContext.Current.CancellationToken));
+        }
+
+        [Fact]
         public async Task GetExpenses_ValidId_ReturnAllExpensesForGivenRoom()
         {
             var expenses = await fixture.ExpenseRepository.GetExspensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken);
@@ -167,6 +232,36 @@ namespace EvenSteven.RepositoryTests
             var expenses = await fixture.ExpenseRepository.GetExspensesByRoomAsync(new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"), TestContext.Current.CancellationToken);
 
             Assert.Empty(expenses);
+        }
+
+        [Fact]
+        public async Task GetExpenses_RevertedExpenses_AreReturned()
+        {
+            var expenses = await fixture.ExpenseRepository.GetExspensesByRoomAsync(_rooms[1].Id, TestContext.Current.CancellationToken);
+
+            Assert.Contains(expenses, e => e.IsReverted);
+        }
+
+        [Fact]
+        public async Task GetExpenses_CloseCancellationToken_ThrowsTaskCancelledException()
+        {
+            CancellationTokenSource token = new();
+
+            await token.CancelAsync();
+
+            await Assert.ThrowsAsync<TaskCanceledException>(() =>
+                fixture.ExpenseRepository.GetExspensesByRoomAsync(_rooms[0].Id, token.Token));
+        }
+
+        [Fact]
+        public async Task GetExpenses_InvalidDbState_ThrowsDbException()
+        {
+            var poisonFactory = new SqliteConnectionFactory("Data Source=:memory:;Mode=ReadOnly;");
+
+            var isolatedRepo = new SqliteExpenseRepository(poisonFactory, new FakeLogger());
+
+            await Assert.ThrowsAnyAsync<DbException>(() =>
+                isolatedRepo.GetExspensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken));
         }
 
         [Fact]
@@ -189,6 +284,34 @@ namespace EvenSteven.RepositoryTests
         }
 
         [Fact]
+        public async Task RevertExpense_AlreadyReverted_DoesNotThrow()
+        {
+            await fixture.ExpenseRepository.RevertExpenseAsync(_expenses[1].Id, TestContext.Current.CancellationToken);
+
+            var expense = (await fixture.ExpenseRepository
+                .GetExspensesByRoomAsync(_rooms[1].Id, TestContext.Current.CancellationToken))
+                .FirstOrDefault(e => e.Id == _expenses[1].Id);
+
+            Assert.NotNull(expense);
+            Assert.True(expense.IsReverted);
+        }
+
+        [Fact]
+        public async Task RevertExpense_OnlyTargetExpense_Reverted()
+        {
+            await fixture.ExpenseRepository.RevertExpenseAsync(_expenses[0].Id, TestContext.Current.CancellationToken);
+
+            var allExpenses = await fixture.ExpenseRepository
+                .GetExspensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken);
+
+            var revertedExpense = allExpenses.First(e => e.Id == _expenses[0].Id);
+            var otherExpenses = allExpenses.Where(e => e.Id != _expenses[0].Id).ToList();
+
+            Assert.True(revertedExpense.IsReverted);
+            Assert.All(otherExpenses, e => Assert.False(e.IsReverted));
+        }
+
+        [Fact]
         public async Task RevertExpense_InvalidExpenseId_DoNothing()
         {
             await fixture.ExpenseRepository.RevertExpenseAsync(new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"), TestContext.Current.CancellationToken);
@@ -198,6 +321,59 @@ namespace EvenSteven.RepositoryTests
 
             Assert.Equal(_expenses, allExpenses);
             Assert.Equal(_expenseEntries, allExpenseEntries);
+        }
+
+        [Fact]
+        public async Task RevertExpense_RollbackOnDbException_ExpenseNotReverted()
+        {
+            await using var connection = await fixture.ConnectionFactory.CreateOpenConnectionAsync(TestContext.Current.CancellationToken);
+            await connection.ExecuteAsync("""
+                CREATE TRIGGER deny_expense_entries_delete
+                    BEFORE DELETE ON ExpenseEntries
+                BEGIN
+                    SELECT RAISE(FAIL, 'denied');
+                END;
+            """);
+
+            try
+            {
+                await Assert.ThrowsAnyAsync<DbException>(() =>
+                    fixture.ExpenseRepository.RevertExpenseAsync(_expenses[0].Id, TestContext.Current.CancellationToken));
+
+                var expense = (await fixture.ExpenseRepository
+                    .GetExspensesByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken))
+                    .FirstOrDefault(e => e.Id == _expenses[0].Id);
+
+                Assert.NotNull(expense);
+                Assert.False(expense.IsReverted);
+                Assert.Null(expense.RevertedAt);
+            }
+            finally
+            {
+                await connection.ExecuteAsync("DROP TRIGGER IF EXISTS deny_expense_entries_delete;");
+            }
+        }
+
+        [Fact]
+        public async Task RevertExpense_CloseCancellationToken_ThrowsTaskCancelledException()
+        {
+            CancellationTokenSource token = new();
+
+            await token.CancelAsync();
+
+            await Assert.ThrowsAsync<TaskCanceledException>(() =>
+                fixture.ExpenseRepository.RevertExpenseAsync(_expenses[0].Id, token.Token));
+        }
+
+        [Fact]
+        public async Task RevertExpense_InvalidDbState_ThrowsDbException()
+        {
+            var poisonFactory = new SqliteConnectionFactory("Data Source=:memory:;Mode=ReadOnly;");
+
+            var isolatedRepo = new SqliteExpenseRepository(poisonFactory, new FakeLogger());
+
+            await Assert.ThrowsAnyAsync<DbException>(() =>
+                isolatedRepo.RevertExpenseAsync(_expenses[0].Id, TestContext.Current.CancellationToken));
         }
     }
 }
