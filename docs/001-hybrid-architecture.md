@@ -32,40 +32,36 @@
 ## 4. Структура директорий
 
 ```text
-EvenSteven.Api/
-├── Features/                     # Бизнес-логика, сгруппированная по фичам
-│   ├── Common/                   # Общие интерфейсы и публичные сервисы
-│   │   └── Services/
-│   │
-│   ├── Rooms/
-│   │   ├── CreateRoom/
-│   │   │   ├── CreateRoomRequest.cs
-│   │   │   ├── CreateRoomService.cs
-│   │   │   └── CreateRoomController.cs  # Классический контроллер
-│   │   └── GetRoom/
-│   │       ├── GetRoomResponse.cs
-│   │       └── GetRoomController.cs
-│   │
-│   └── Expenses/
-│       └── RevertExpense/
-│           ├── RevertExpenseService.cs
-│           └── RevertExpenseController.cs
-│
-├── Infrastructure/               # Техническая реализация
-│   ├── Storage/
-│   │   ├── SqliteConnectionFactory.cs
-│   │   └── Repositories/         # Классические репозитории
-│   │       ├── SqliteRoomRepository.cs
-│   │       └── SqliteExpenseRepository.cs
-│   │
-│   ├── Authorization/
-│   │   └── RoomAuthMiddleware.cs
-│   │
-│   └── Middleware/
-│       └── GlobalExceptionHandler.cs
-│
-└── Program.cs
+EvenSteven.App/
+├── src/
+│   ├── EvenSteven.Api/            # HTTP-слой: фичи, middleware, DI
+│   │   ├── Features/              # Бизнес-логика, сгруппированная по фичам
+│   │   │   ├── Common/Services/   # Общие интерфейсы и публичные сервисы
+│   │   │   ├── Rooms/
+│   │   │   │   ├── CreateRoom/    # CreateRoomRequest.cs / Service / Controller
+│   │   │   │   └── GetRoom/       # GetRoomResponse.cs / Controller
+│   │   │   └── Expenses/
+│   │   │       └── RevertExpense/ # RevertExpenseService.cs / Controller
+│   │   ├── Infrastructure/
+│   │   │   ├── Authorization/     # Механика доступа к комнатам — см. ADR-002
+│   │   │   └── Middleware/
+│   │   │       └── GlobalExceptionHandler.cs
+│   │   └── Program.cs
+│   ├── EvenSteven.Infrastructure/ # Работа с БД (SQLite + Dapper, FluentMigrator)
+│   │   └── Storage/
+│   │       ├── ConnectionFactory/ # SqliteConnectionFactory.cs
+│   │       ├── Repositories/      # Классические репозитории + интерфейсы
+│   │       ├── Migrations/
+│   │       └── TypeHandlers/
+│   ├── EvenSteven.Shared/         # Модели (Room, Participant, Expense) и контракты
+│   │   └── Models/
+│   └── EvenSteven.BlazorWeb/      # Клиентское приложение
+├── tests/
+│   └── EvenSteven.RepositoryTests/
+└── docs/                          # ADR-001, ADR-002, ...
 ```
+
+> **Замечание (поправка):** на текущий момент `Features/` пуста (содержит только `.gitkeep`), а шаблонный `Controllers/WeatherForecastController.cs` удаляется при реализации первой фичи. Распределение контрактов и механики авторизации уточнено в ADR-002.
 
 ## 5. Последствия
 
