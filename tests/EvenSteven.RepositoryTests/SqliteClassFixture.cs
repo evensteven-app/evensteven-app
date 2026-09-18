@@ -29,7 +29,7 @@ namespace EvenSteven.RepositoryTests
         {
             GC.SuppressFinalize(this);
 
-           return Database.DisposeAsync();
+            return Database.DisposeAsync();
         }
     }
 }

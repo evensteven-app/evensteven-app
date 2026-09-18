@@ -1,9 +1,9 @@
-﻿using Dapper;
+﻿using System.Data.Common;
+using Dapper;
 using EvenSteven.Infrastructure.Storage.ConnectionFactory;
 using EvenSteven.Infrastructure.Storage.Repositories.Interfaces;
 using EvenSteven.Shared.Models;
 using Microsoft.Extensions.Logging;
-using System.Data.Common;
 
 namespace EvenSteven.Infrastructure.Storage.Repositories
 {

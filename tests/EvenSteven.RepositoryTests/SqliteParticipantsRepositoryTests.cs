@@ -1,18 +1,18 @@
-﻿using Dapper;
+﻿using System.Data.Common;
+using Dapper;
 using EvenSteven.Infrastructure.Storage.ConnectionFactory;
 using EvenSteven.Infrastructure.Storage.Repositories;
 using EvenSteven.Shared.Models;
 using Microsoft.Extensions.Logging.Testing;
-using System.Data.Common;
 
 namespace EvenSteven.RepositoryTests
 {
     public class SqliteParticipantsRepositoryTests(SqliteClassFixture fixture) : IAsyncLifetime, IClassFixture<SqliteClassFixture>
     {
-        private List<Room> _rooms;
-        private List<Participant> _participants;
-        private List<Expense> _expenses;
-        private List<ExpenseEntry> _expenseEntries;
+        private List<Room> _rooms = null!;
+        private List<Participant> _participants = null!;
+        private List<Expense> _expenses = null!;
+        private List<ExpenseEntry> _expenseEntries = null!;
 
         public async ValueTask DisposeAsync()
         {

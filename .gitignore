@@ -437,3 +437,7 @@ FodyWeavers.xsd
 
 # Конфигурационные файлы
 appsettings.*.json
+
+# Артефакты тестового раннера
+TestResults/
+*.diag

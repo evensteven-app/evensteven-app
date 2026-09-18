@@ -1,5 +1,5 @@
-using Dapper;
 using System.Data;
+using Dapper;
 
 namespace EvenSteven.Infrastructure.Storage.TypeHandlers
 {

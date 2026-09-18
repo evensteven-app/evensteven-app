@@ -1,8 +1,8 @@
-﻿using Dapper;
+﻿using System.Data.Common;
+using Dapper;
 using EvenSteven.Infrastructure.Storage.ConnectionFactory;
 using EvenSteven.Infrastructure.Storage.Repositories;
 using EvenSteven.Shared.Models;
-using System.Data.Common;
 using Microsoft.Extensions.Logging.Testing;
 
 namespace EvenSteven.RepositoryTests
@@ -50,7 +50,7 @@ namespace EvenSteven.RepositoryTests
             await fixture.RoomRepository.CreateRoomAsync(newRoom, TestContext.Current.CancellationToken);
 
             await Assert.ThrowsAnyAsync<DbException>(() =>
-                fixture.RoomRepository.CreateRoomAsync(newRoom with {Id = new Guid("00000000-0000-0000-0000-000000000005") }, TestContext.Current.CancellationToken));
+                fixture.RoomRepository.CreateRoomAsync(newRoom with { Id = new Guid("00000000-0000-0000-0000-000000000005") }, TestContext.Current.CancellationToken));
         }
 
         [Fact]

@@ -1,6 +1,6 @@
-﻿using Dapper;
-using System.Data;
+﻿using System.Data;
 using System.Globalization;
+using Dapper;
 
 namespace EvenSteven.Infrastructure.Storage.TypeHandlers
 {

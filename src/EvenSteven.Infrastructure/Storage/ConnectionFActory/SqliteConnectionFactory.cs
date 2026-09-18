@@ -1,6 +1,6 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using System.Data.Common;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
-using System.Data.Common;
 
 namespace EvenSteven.Infrastructure.Storage.ConnectionFactory
 {
@@ -19,7 +19,8 @@ namespace EvenSteven.Infrastructure.Storage.ConnectionFactory
 
         public DbConnection CreateConnection()
         {
-            if (_connectionString == null) {
+            if (_connectionString == null)
+            {
                 throw new InvalidOperationException("Connection string 'db-connection' is not configured.");
             }
             return new SqliteConnection(_connectionString);
