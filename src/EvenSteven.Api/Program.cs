@@ -1,6 +1,9 @@
+using EvenSteven.Api.Access;
 using EvenSteven.Infrastructure.Storage.ConnectionFactory;
 using EvenSteven.Infrastructure.Storage.Migrations;
+using EvenSteven.Infrastructure.Storage.Repositories;
 using EvenSteven.Infrastructure.Storage.TypeHandlers;
+using EvenSteven.Shared.Filter;
 using FluentMigrator.Runner;
 
 namespace EvenSteven.Api
@@ -21,6 +24,12 @@ namespace EvenSteven.Api
                     .ScanIn(typeof(MigrationAssemblyMarker).Assembly).For.All()
                 )
                 .AddLogging(lb => lb.AddFluentMigratorConsole());
+
+
+            builder.Services.AddSingleton<IRoomAccessGate, AllowAllGate>();
+            builder.Services.AddScoped<ICurrentRoomAccess, RoomAccessContext>();
+
+            builder.Services.AddScopedRepositoryServices();
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

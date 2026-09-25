@@ -10,7 +10,7 @@
 
 1.  `X-Edit-Key` — ключ владельца комнаты → роль `admin`;
 2.  `X-Participant-Key` — ключ участника → роль `participant`;
-3.  `X-Room-Password` — пароль комнаты (bcrypt verify) → роль `guest`.
+3.  `X-Room-Password` — пароль комнаты (Argon2id verify) → роль `guest`.
 
 В перспективе добавляется доступ по аккаунту (JWT + Identity). Одновременно приватное ядро `EvenSteven.Core` обязано централизованно контролировать доступ и мгновенно отсекать комнату при истечении подписки («как у VPN»), не зная ничего об HTTP.
 
@@ -39,7 +39,7 @@ JWT добавляется позже стандартным путём (`UseAut
 |---|---|---|
 | **EvenSteven.Shared** | контракты: `RoomGrant`, `RoomRole`, `RoomAccessRequest`, `ICurrentRoomAccess`, `IRoomAccessProvider`, `IRoomAccessGate` | приватное ядро Core реализует их через DI (Strict Interfaces из README Core); контракты без ASP.NET-типов — Core остаётся Framework Agnostic |
 | **EvenSteven.Api** | механика: `RoomAuthorizationFilter`, резолверы (`EditKey` / `ParticipantKey` / `Password`), `BruteForceGuard`, `AllowAllGate` (заглушка), `RoomAccessContext`, `RoomControllerBase`, `GlobalExceptionHandler`, DI-регистрации | HTTP-обвязка открыта и не содержит коммерческой ценности |
-| **EvenSteven.Infrastructure** | репозитории (`GetRoomByEditKeyAsync`, `GetParticipantByKeyAsync`, `GetRoomByIdAsync`), bcrypt-хэшер в `Shared/Utils` | обычная работа с БД (SQLite + Dapper) и чистый алгоритм |
+| **EvenSteven.Infrastructure** | репозитории (`GetRoomByEditKeyAsync`, `GetParticipantByKeyAsync`, `GetRoomByIdAsync`), Argon2id-хэшер в `Shared/Utils` | обычная работа с БД (SQLite + Dapper) и чистый алгоритм |
 | **EvenSteven.Core** (приватное) | `PremiumGate : IRoomAccessGate` — применяет подписку/блокировку, режет гранты при истечении оплаты | коммерческая ценность; подключается в Deploy-пайплайне как submodule |
 
 ### 3.2. Контракты
@@ -59,7 +59,7 @@ JWT добавляется позже стандартным путём (`UseAut
 |---|---|---|---|
 | 1 | `X-Edit-Key` | `GetRoomByEditKeyAsync` | `{ roomId, Admin, null }` |
 | 2 | `X-Participant-Key` | `GetParticipantByKeyAsync` | `{ roomId, Participant, participantId }` |
-| 3 | `X-Room-Password` | bcrypt verify + BruteForceGuard | `{ roomId, Guest, null }` |
+| 3 | `X-Room-Password` | Argon2id verify + BruteForceGuard | `{ roomId, Guest, null }` |
 
 Ни один не прошёл → `403`. Пароль приходит заголовком `X-Room-Password`, поэтому фильтр выполняет всю цепочку до привязки модели. По HTTPS заголовки шифруются транзитом; заголовки аутентификации в логи не пишем.
 
@@ -83,7 +83,7 @@ Controller → Access.Require(roomId)       // 200 или 403
 
 ### 3.6. Связанные решения
 
-*   Пароль комнаты хэшируется **bcrypt** (`BCrypt.Net-Next`); функция в `EvenSteven.Shared/Utils/PasswordHasher`. Лимит входа — 72 байта.
+*   Пароль комнаты хэшируется **Argon2id** (`Isopoh.Cryptography.Argon2`); функция в `EvenSteven.Shared/Utils/PasswordHasher` (PHC-строка `$argon2id$...` со встроенными солью и параметрами).
 *   Валидация входных моделей — **DataAnnotations** (встроенная обработка `[ApiController]`).
 *   Оба ключа и пароль проверяются фильтром с первого дня.
 *   Dev-строка подключения задаётся в `appsettings.Development.json`; `appsettings.json` — только пример.

@@ -74,5 +74,27 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
                 throw;
             }
         }
+
+        public async Task<Room?> GetRoomByEditKeyAsync(Guid roomId, Guid editKey, CancellationToken cancellationToken)
+        {
+            await using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+
+            string commandText = """
+                             SELECT Id, Title, EditKey, InviteCode, PasswordHash, Version, CreatedAt 
+                                 FROM Rooms
+                                 WHERE Id = @roomId AND EditKey = @editKey;
+                             """;
+
+            try
+            {
+                var command = new CommandDefinition(commandText, new { roomId, editKey }, cancellationToken: cancellationToken);
+                return await connection.QueryFirstOrDefaultAsync<Room>(command);
+            }
+            catch (DbException ex)
+            {
+                _logger.LogError(exception: ex, message: "Error occurred while getting room with edit key: {roomId}", roomId);
+                throw;
+            }
+        }
     }
 }

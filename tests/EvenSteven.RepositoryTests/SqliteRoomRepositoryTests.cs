@@ -112,5 +112,51 @@ namespace EvenSteven.RepositoryTests
             await Assert.ThrowsAnyAsync<DbException>(() =>
                 isolatedRepo.GetRoomByIdAsync(new Guid("00000000-0000-0000-0000-000000000001"), TestContext.Current.CancellationToken));
         }
+
+        [Fact]
+        public async Task GetRoomByEditKey_ValidKeyOfRoom_ReturnsRoom()
+        {
+            var room = await fixture.RoomRepository.GetRoomByEditKeyAsync(_mockRoom[0].Id, _mockRoom[0].EditKey, TestContext.Current.CancellationToken);
+
+            Assert.Equal(_mockRoom[0], room);
+        }
+
+        [Fact]
+        public async Task GetRoomByEditKey_NonexistentKey_ReturnsNull()
+        {
+            var room = await fixture.RoomRepository.GetRoomByEditKeyAsync(_mockRoom[0].Id, new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"), TestContext.Current.CancellationToken);
+
+            Assert.Null(room);
+        }
+
+        [Fact]
+        public async Task GetRoomByEditKey_ValidKeyOfAnotherRoom_ReturnsNull()
+        {
+            var room = await fixture.RoomRepository.GetRoomByEditKeyAsync(_mockRoom[0].Id, _mockRoom[1].EditKey, TestContext.Current.CancellationToken);
+
+            Assert.Null(room);
+        }
+
+        [Fact]
+        public async Task GetRoomByEditKey_CloseCancellationToken_ThrowsTaskCancelledException()
+        {
+            CancellationTokenSource token = new();
+
+            await token.CancelAsync();
+
+            await Assert.ThrowsAsync<TaskCanceledException>(() =>
+                fixture.RoomRepository.GetRoomByEditKeyAsync(_mockRoom[0].Id, _mockRoom[0].EditKey, token.Token));
+        }
+
+        [Fact]
+        public async Task GetRoomByEditKey_InvalidDbState_ThrowsDbException()
+        {
+            var poisonFactory = new SqliteConnectionFactory("Data Source=:memory:;Mode=ReadOnly;");
+
+            var isolatedRepo = new SqliteRoomRepository(poisonFactory, new FakeLogger<SqliteRoomRepository>());
+
+            await Assert.ThrowsAnyAsync<DbException>(() =>
+                isolatedRepo.GetRoomByEditKeyAsync(_mockRoom[0].Id, _mockRoom[0].EditKey, TestContext.Current.CancellationToken));
+        }
     }
 }

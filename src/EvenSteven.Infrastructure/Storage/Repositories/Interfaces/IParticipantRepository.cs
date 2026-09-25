@@ -6,6 +6,7 @@ namespace EvenSteven.Infrastructure.Storage.Repositories.Interfaces
     {
         Task<Guid> AddParticipantAsync(Participant participant, CancellationToken cancellationToken);
         Task<List<Participant>> GetParticipantsByRoomAsync(Guid roomId, CancellationToken cancellationToken);
+        Task<Participant?> GetParticipantByKeyAsync(Guid roomId, string participantKey, CancellationToken cancellationToken);
         Task DeleteParticipantAsync(Guid participantId, CancellationToken cancellationToken);
         Task UpdateParticipantNameAsync(Guid participantId, string newName, CancellationToken cancellationToken);
     }

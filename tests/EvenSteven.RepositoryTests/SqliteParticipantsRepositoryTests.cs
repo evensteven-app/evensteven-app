@@ -218,6 +218,55 @@ namespace EvenSteven.RepositoryTests
         }
 
         [Fact]
+        public async Task GetParticipantByKey_ValidKeyOfRoom_ReturnsParticipant()
+        {
+            var participant =
+                await fixture.ParticipantRepository.GetParticipantByKeyAsync(_rooms[0].Id, _participants[0].ParticipantKey, TestContext.Current.CancellationToken);
+
+            Assert.Equal(_participants[0], participant);
+        }
+
+        [Fact]
+        public async Task GetParticipantByKey_NonexistentKey_ReturnsNull()
+        {
+            var participant =
+                await fixture.ParticipantRepository.GetParticipantByKeyAsync(_rooms[0].Id, "NONEXISTENT", TestContext.Current.CancellationToken);
+
+            Assert.Null(participant);
+        }
+
+        [Fact]
+        public async Task GetParticipantByKey_ValidKeyOfAnotherRoom_ReturnsNull()
+        {
+            var participant =
+                await fixture.ParticipantRepository.GetParticipantByKeyAsync(_rooms[0].Id, _participants[2].ParticipantKey, TestContext.Current.CancellationToken);
+
+            Assert.Null(participant);
+        }
+
+        [Fact]
+        public async Task GetParticipantByKey_CloseCancellationToken_ThrowsTaskCancelledException()
+        {
+            CancellationTokenSource token = new();
+
+            await token.CancelAsync();
+
+            await Assert.ThrowsAsync<TaskCanceledException>(() =>
+                fixture.ParticipantRepository.GetParticipantByKeyAsync(_rooms[0].Id, _participants[0].ParticipantKey, token.Token));
+        }
+
+        [Fact]
+        public async Task GetParticipantByKey_InvalidDbState_ThrowsDbException()
+        {
+            var poisonFactory = new SqliteConnectionFactory("Data Source=:memory:;Mode=ReadOnly;");
+
+            var isolatedRepo = new SqliteParticipantRepository(poisonFactory, new FakeLogger<SqliteParticipantRepository>());
+
+            await Assert.ThrowsAnyAsync<DbException>(() =>
+                isolatedRepo.GetParticipantByKeyAsync(_rooms[0].Id, _participants[0].ParticipantKey, TestContext.Current.CancellationToken));
+        }
+
+        [Fact]
         public async Task DeleteParticipant_ValidParticipantId_RemovesParticipant()
         {
             var participantsBefore = await fixture.ParticipantRepository.GetParticipantsByRoomAsync(_rooms[0].Id, TestContext.Current.CancellationToken);

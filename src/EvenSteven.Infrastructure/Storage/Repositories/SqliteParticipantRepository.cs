@@ -51,6 +51,48 @@ namespace EvenSteven.Infrastructure.Storage.Repositories
             return participantId;
         }
 
+        public async Task<Participant?> GetParticipantByKeyAsync(Guid roomId, string participantKey, CancellationToken cancellationToken)
+        {
+            await using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+
+            string commandText = """
+                                 WITH Shared AS (
+                                 SELECT ParticipantId,
+                                        SUM(Share) AS TotalShare
+                                 FROM ExpenseEntries
+                                 GROUP BY ParticipantId
+                                 ), Paid AS (
+                                     SELECT PayerId,
+                                            SUM(Amount) AS TotalPaid
+                                     FROM Expenses
+                                     WHERE IsReverted = FALSE
+                                     GROUP BY PayerId
+                                 )
+                                 SELECT p.Id,
+                                        p.RoomId,
+                                        p.Name,
+                                        p.ParticipantKey,
+                                        (COALESCE(Paid.TotalPaid, 0) - COALESCE(Shared.TotalShare, 0)) AS Balance
+                                 FROM Participants AS p
+                                          LEFT JOIN Shared ON Shared.ParticipantId = p.Id
+                                          LEFT JOIN Paid ON Paid.PayerId = p.Id
+                                 WHERE p.RoomId = @RoomId
+                                   AND p.ParticipantKey = @ParticipantKey;
+                             """;
+
+            var command = new CommandDefinition(commandText, new { RoomId = roomId, ParticipantKey = participantKey }, cancellationToken: cancellationToken);
+
+            try
+            {
+                return (await connection.QueryAsync<Participant>(command)).FirstOrDefault();
+            }
+            catch (DbException ex)
+            {
+                _logger.LogError(ex, "Error occurred while getting participant by key in room: {roomId}", roomId);
+                throw;
+            }
+        }
+
         public async Task DeleteParticipantAsync(Guid participantId, CancellationToken cancellationToken)
         {
             await using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);

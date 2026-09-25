@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace EvenSteven.Shared.Filter
+﻿namespace EvenSteven.Shared.Filter
 {
     public interface IRoomAccessProvider
     {

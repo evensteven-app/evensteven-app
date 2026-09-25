@@ -2,7 +2,7 @@
 {
     public record RoomGrant(
         Guid RoomId,
-        RoomRole? RoomRole,
+        RoomRole RoomRole,
         Guid? ParticipantId
     );
 }
