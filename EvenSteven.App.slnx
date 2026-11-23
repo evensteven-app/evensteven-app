@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/EvenSteven.Shared/EvenSteven.Shared.csproj" Id="a102c941-c0ea-46df-bcff-9a2b3d4f6572" />
+  </Folder>
+  <Folder Name="/src/api/">
+    <Project Path="src/api/EvenSteven.Api/EvenSteven.Api.csproj" />
+    <Project Path="src/api/EvenSteven.Infrastructure/EvenSteven.Infrastructure.csproj" Id="fd5abcfe-1617-4a21-a598-137a8b30e7fa" />
+  </Folder>
+  <Folder Name="/src/web/">
+    <Project Path="src/web/EvenSteven.BlazorWeb/EvenSteven.BlazorWeb.csproj" Id="4091e749-5e93-4a61-a5f8-d33239b6a7f6" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EvenSteven.RepositoryTests/EvenSteven.RepositoryTests.csproj" Id="78027349-5df1-4f97-b4b5-becc66f7dc7c" />
+  </Folder>
+</Solution>
