@@ -1,4 +1,7 @@
 
+using EvenSteven.Infrastructure.Storage.ConnectionFactory;
+using EvenSteven.Infrastructure.Storage.TypeHandlers;
+
 namespace EvenSteven.Api
 {
     public class Program
@@ -7,7 +10,10 @@ namespace EvenSteven.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            // Register type handlers for correct db work
+            builder.Services.RegisterTypeHandlers();
+
+            builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
