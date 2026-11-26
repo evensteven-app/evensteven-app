@@ -11,5 +11,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/EvenSteven.RepositoryTests/EvenSteven.RepositoryTests.csproj" Id="78027349-5df1-4f97-b4b5-becc66f7dc7c" />
+    <Project Path="tests/EvenSteven.SplitterTests/EvenSteven.SplitterTests.csproj" Id="0c72e6de-afaf-4df6-b4fc-3ab9a6b85188" />
   </Folder>
 </Solution>
