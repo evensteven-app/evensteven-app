@@ -5,7 +5,7 @@
         string Title,
         string InviteCode,
         Guid EditKey,
-        string PasswordHash,
+        string? PasswordHash,
         long Version,
         DateTime CreatedAt,
         DateTime EditedAt

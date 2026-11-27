@@ -1,6 +1,6 @@
 ﻿namespace EvenSteven.Shared.Models
 {
-    public class Participant(
+    public record Participant(
         Guid Id,
         Guid RoomId,
         string Name,

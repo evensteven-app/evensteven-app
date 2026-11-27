@@ -5,10 +5,10 @@
         Guid RoomId,
         Guid PayerId,
         long Amount,
-        string Note,
+        string? Note,
         bool IsReverted,
-        Guid RevertedBy,
-        DateTime RevertedAt,
+        Guid? RevertedBy,
+        DateTime? RevertedAt,
         DateTime CreatedAt
     );
 }
